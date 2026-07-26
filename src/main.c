@@ -3,6 +3,7 @@
 
 int main() {
 
+  //UART initialization
   UBRR0 = 16;
   UCSR0A = (1<<U2X0);
   UCSR0C = (1<<UCSZ00) | (1<<UCSZ01);
