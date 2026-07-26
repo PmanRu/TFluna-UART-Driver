@@ -1,6 +1,6 @@
 #ifndef TFLUNA_H
 #define TFLUNA_H
 
-void TFluna();
+void TFluna(char unit);
 
 #endif

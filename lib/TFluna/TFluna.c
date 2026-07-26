@@ -1,6 +1,8 @@
 #include <avr/io.h>
 
-void TFluna() {
+void TFluna(char unit) {
+
+    //checks for header bytes
     uint8_t headerCheck[2] = {0, 0};
     while (headerCheck[0] != 0x59 || headerCheck[1] != 0x59) {
       for (int i=0; i<sizeof(headerCheck); i++) {
@@ -9,29 +11,25 @@ void TFluna() {
       }
     }
 
+    //stores low distance byte
     while(!(UCSR0A & (1<<RXC0)));
     uint8_t low = UDR0;
 
+    //stores high distance byte
     while(!(UCSR0A & (1<<RXC0)));
     uint8_t high = UDR0;
-    int asciiConvert[4];
     uint16_t distance = (high<<8) | low;
     
+    if (unit == 'I') {distance /= 2.5;}
+    
+    //stores each individual digit from the distance value in reverse inside an array
+    int asciiConvert[4];
     for (int i=0; i < sizeof(asciiConvert)/2; i++) {
       switch (i) {
         case 0:
           if (distance >= 1000) {
-            asciiConvert[0] = distance;
-            
-            while (asciiConvert[0] % 100) {
-              asciiConvert[0]--;
-            }
-            asciiConvert[0] /= 100;
-
-            while (asciiConvert[0] % 10) {
-              asciiConvert[0]--;
-            }
-            asciiConvert[0] = (asciiConvert[0]/10) + '0';
+            asciiConvert[0] = (distance % 10) + '0';
+            distance /= 10;
             break;
           }
           
@@ -39,17 +37,11 @@ void TFluna() {
             asciiConvert[0] = 99;
             break;
           }
-
+          
         case 1:
           if (distance >= 100) {
-            asciiConvert[1] = distance;
-            
-            while (asciiConvert[1] % 100) {
-              asciiConvert[1]--;
-            }
-            asciiConvert[1] /= 100;
-
-            asciiConvert[1] = (asciiConvert[1] % 10) + '0';
+            asciiConvert[1] = (distance % 10) + '0';
+            distance /= 10;
             break;
           }
 
@@ -60,14 +52,8 @@ void TFluna() {
 
         case 2:
           if (distance >= 10) {
-            asciiConvert[2] = distance;
-            
-            while (asciiConvert[2] % 10) {
-              asciiConvert[2]--;
-            }
-            asciiConvert[2] %= 100;
-
-            asciiConvert[2] = (asciiConvert[2]/10) + '0';
+            asciiConvert[2] = (distance % 10) + '0';
+            distance /= 10;
             break;
           }
 
@@ -77,21 +63,42 @@ void TFluna() {
           }
 
         case 3:
-          asciiConvert[3] = (distance % 10) + '0';
+          asciiConvert[3] = distance + '0';
           break;
       }
     }
 
-    for (int i=0; i < sizeof(asciiConvert)/2; i++) {
-      if (asciiConvert[i] == 99) {continue;}
-      while(!(UCSR0A & (1<<UDRE0)));
-      UDR0 = asciiConvert[i];
-    }
+    //Unit of measurement: centimeters
+    if (unit == 'C') {
 
-    char measurement[] = "cm";
-    for (int j=0; j < (sizeof(measurement)-1); j++) {
-      while(!(UCSR0A & (1<<UDRE0)));
-      UDR0 = measurement[j];
+      for (int i=sizeof(asciiConvert)/2; i > 0; i--) {
+        if (asciiConvert[i] == 99) {continue;}
+        while(!(UCSR0A & (1<<UDRE0)));
+        UDR0 = asciiConvert[i];
+      }
+
+      char measurement[] = "cm";
+      for (int j=0; j < (sizeof(measurement)-1); j++) {
+        while(!(UCSR0A & (1<<UDRE0)));
+        UDR0 = measurement[j];
+      } 
+    }
+    
+    //Unit of measurement: inches
+    else if (unit == 'I') {
+
+      for (int i=sizeof(asciiConvert)/2; i > 0; i--) {
+        if (asciiConvert[i] == 99) {continue;}
+        while(!(UCSR0A & (1<<UDRE0)));
+        
+        UDR0 = asciiConvert[i];
+      }
+
+      char measurement[] = "in";
+      for (int j=0; j < (sizeof(measurement)-1); j++) {
+        while(!(UCSR0A & (1<<UDRE0)));
+        UDR0 = measurement[j];
+      } 
     }
 
     while(!(UCSR0A & (1<<UDRE0)));
