@@ -10,7 +10,8 @@ int main() {
   UCSR0B = (1<<TXEN0) | (1<<RXEN0);
   
   while (1) {
-    TFluna('C');
+    uint16_t distance = TF_distance('C');
+    TF_monitor(distance);
   }
 
   return 0;
