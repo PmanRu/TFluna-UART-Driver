@@ -22,14 +22,12 @@ uint16_t TF_distance(char unit) {
     uint8_t high = UDR0;
     uint16_t distance = (high<<8) | low;
 
-    if (unit == 'C')  {return distance;}
+    if (unit == 'c')  {return distance;}
 
-    if (unit == 'I') {
+    if (unit == 'i') {
       inches = true;
       return (distance / 2.5);
     }
-
-    else {return 1;}
 }
 
 void TF_monitor(uint16_t distance) {

@@ -6,7 +6,7 @@ Before sending distance values, the sensor sends the header byte 0x59 twice. Tak
 - inches
 
 **How to select appropriate Unit**
-- The argument for the `TF_distance()` function in the TFluna library must be `'C'` for cm or `'I'` for inches
+- The argument for the `TF_distance()` function in the TFluna library must be `'c'` for cm or `'i'` for inches
 
 ### TFluna library
 - `TF_distance()` returns the distance value
