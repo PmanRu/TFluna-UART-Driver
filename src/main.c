@@ -9,8 +9,10 @@ int main() {
   UCSR0C = (1<<UCSZ00) | (1<<UCSZ01);
   UCSR0B = (1<<TXEN0) | (1<<RXEN0);
   
+  uint16_t distance;
+
   while (1) {
-    uint16_t distance = TF_distance('c');
+    distance = TF_distance();
     TF_monitor(distance);
   }
 

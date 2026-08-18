@@ -1,112 +1,68 @@
 #include <avr/io.h>
-#include <stdbool.h>
 
-bool inches = false;
-
-uint16_t TF_distance(char unit) {
+uint16_t TF_distance() {
   //checks for header bytes
-    uint8_t headerCheck[2] = {0, 0};
-    while (headerCheck[0] != 0x59 || headerCheck[1] != 0x59) {
-      for (int i=0; i<sizeof(headerCheck); i++) {
-        while(!(UCSR0A & (1<<RXC0)));
-        headerCheck[i] = UDR0;
-      }
+  uint8_t headerCheck[2] = {0, 0};
+  while (headerCheck[0] != 0x59 || headerCheck[1] != 0x59) {
+    for (int i=0; i<sizeof(headerCheck); i++) {
+      while(!(UCSR0A & (1<<RXC0)));
+      headerCheck[i] = UDR0;
     }
+  }
 
-    //stores low distance byte
-    while(!(UCSR0A & (1<<RXC0)));
-    uint8_t low = UDR0;
+  //stores low distance byte
+  while(!(UCSR0A & (1<<RXC0)));
+  uint8_t low = UDR0;
 
-    //stores high distance byte
-    while(!(UCSR0A & (1<<RXC0)));
-    uint8_t high = UDR0;
-    uint16_t distance = (high<<8) | low;
+  //stores high distance byte
+  while(!(UCSR0A & (1<<RXC0)));
+  uint8_t high = UDR0;
+  uint16_t distance = (high<<8) | low;
 
-    if (unit == 'c')  {return distance;}
-
-    if (unit == 'i') {
-      inches = true;
-      return (distance / 2.5);
-    }
+  return distance;
 }
 
 void TF_monitor(uint16_t distance) {
-  //stores each individual digit from the distance value in reverse inside an array
+
+  //Stores each digit from the distance value inside an array in reverse
   int asciiConvert[4];
+  int num = 1000;
   for (int i=0; i < sizeof(asciiConvert)/2; i++) {
-    switch (i) {
-      case 0:
-        if (distance >= 1000) {
-          asciiConvert[0] = (distance % 10) + '0';
-          distance /= 10;
-            break;
-        }
-          
-        else {
-          asciiConvert[0] = 99;
-          break;
-        }
-          
-      case 1:
-        if (distance >= 100) {
-          asciiConvert[1] = (distance % 10) + '0';
-          distance /= 10;
-          break;
-        }
-
-        else {
-          asciiConvert[1] = 99;
-          break;
-        }
-
-      case 2:
-        if (distance >= 10) {
-          asciiConvert[2] = (distance % 10) + '0';
-          distance /= 10;
-          break;
-        }
-
-        else {
-          asciiConvert[2] = 99;
-          break;
-        }
-
-      case 3:
-        asciiConvert[3] = distance + '0';
-        break;
+    if (distance < 10) {
+      asciiConvert[i] = distance + '0';
+      while (i < sizeof(asciiConvert)/2) {
+        ++i;
+        asciiConvert[i] = 99;
+      }
     }
-  }
     
-  //Unit of measurement: inches
-  if (inches) {
-    for (int i=sizeof(asciiConvert)/2; i > 0; i--) {
-      if (asciiConvert[i] == 99) {continue;}
-      while(!(UCSR0A & (1<<UDRE0)));
-      UDR0 = asciiConvert[i];
+    else if (distance >= num) {
+      asciiConvert[i] = (distance % 10) + '0';
+      distance /= 10;
+      num /= 10;
+      continue;
     }
 
-    char measurement[] = "in";
-    for (int j=0; j < (sizeof(measurement)-1); j++) {
-      while(!(UCSR0A & (1<<UDRE0)));
-      UDR0 = measurement[j];
-    } 
-  }
-
-  //Unit of measurement: centimeters
-  else {
-    for (int i=sizeof(asciiConvert)/2; i > 0; i--) {
-      if (asciiConvert[i] == 99) {continue;}
-      while(!(UCSR0A & (1<<UDRE0)));
-      UDR0 = asciiConvert[i];
+    else {
+      asciiConvert[i] = 99;
+      num /= 10;
+      continue;
     }
-
-    char measurement[] = "cm";
-    for (int j=0; j < (sizeof(measurement)-1); j++) {
-      while(!(UCSR0A & (1<<UDRE0)));
-      UDR0 = measurement[j];
-    } 
   }
 
+  for (int i=((sizeof(asciiConvert)/2)-1); i >= 0; i--) {
+    if (asciiConvert[i] == 99) {continue;}
+
+    while(!(UCSR0A & (1<<UDRE0)));
+    UDR0 = asciiConvert[i];
+  }
+
+  char measurement[] = "cm";
+  for (int j=0; j < (sizeof(measurement)-1); j++) {
+    while(!(UCSR0A & (1<<UDRE0)));
+    UDR0 = measurement[j];
+  } 
+  
   while(!(UCSR0A & (1<<UDRE0)));
   UDR0 = '\n';
 }
