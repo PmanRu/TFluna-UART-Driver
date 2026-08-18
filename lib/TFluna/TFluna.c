@@ -24,7 +24,7 @@ uint16_t TF_distance() {
 
 void TF_monitor(uint16_t distance) {
 
-  //Stores each digit from the distance value inside an array in reverse
+  //Stores single digit distance value in first position of asciiConvert array and fills the rest of the array with filler values meant for ignoring
   int asciiConvert[4];
   int num = 1000;
   for (int i=0; i < sizeof(asciiConvert)/2; i++) {
@@ -36,6 +36,7 @@ void TF_monitor(uint16_t distance) {
       }
     }
     
+    //Stores each digit from the distance value inside the asciiConvert array in reverse
     else if (distance >= num) {
       asciiConvert[i] = (distance % 10) + '0';
       distance /= 10;
